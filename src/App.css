@@ -1,0 +1,846 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: #0d0f12;
+  color: #f4f5f7;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #0d0f12;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topbar {
+  height: 72px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 24px;
+
+  border-bottom: 1px solid #25282d;
+
+  background: #111317;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #e6ff4f;
+
+  color: #111;
+
+  border-radius: 10px;
+
+  font-size: 18px;
+}
+
+.brand h1 {
+  margin: 0;
+
+  font-size: 15px;
+
+  letter-spacing: 1.5px;
+}
+
+.brand h1 span {
+  color: #e6ff4f;
+}
+
+.brand p {
+  margin: 3px 0 0;
+
+  color: #858a93;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   TOP ACTIONS
+========================================================= */
+
+.top-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.secondary-button,
+.ai-button,
+.icon-button {
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 0 14px;
+
+  border-radius: 8px;
+
+  border: 1px solid #30343a;
+
+  background: #191c21;
+
+  color: #e9ebef;
+}
+
+.secondary-button:hover {
+  border-color: #555b63;
+}
+
+.ai-button {
+  background: #e6ff4f;
+
+  border-color: #e6ff4f;
+
+  color: #111;
+
+  font-weight: 700;
+}
+
+.ai-button:hover {
+  filter: brightness(0.95);
+}
+
+.icon-button {
+  padding: 0 10px;
+}
+
+
+/* =========================================================
+   WORKSPACE
+========================================================= */
+
+.workspace {
+  flex: 1;
+
+  min-height: 0;
+
+  display: grid;
+
+  grid-template-columns:
+    220px
+    1fr
+    260px;
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.left-panel,
+.right-panel {
+  background: #111317;
+
+  overflow-y: auto;
+}
+
+.left-panel {
+  padding: 18px;
+
+  border-right: 1px solid #25282d;
+}
+
+.right-panel {
+  padding: 18px;
+
+  border-left: 1px solid #25282d;
+}
+
+
+/* =========================================================
+   PANEL HEADERS
+========================================================= */
+
+.panel-title,
+.properties-header {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-title h2,
+.properties-header h2 {
+  margin: 0;
+
+  font-size: 14px;
+}
+
+.panel-title p,
+.properties-header p {
+  margin: 4px 0 0;
+
+  font-size: 10px;
+
+  color: #737983;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.search-box {
+  width: 100%;
+  height: 36px;
+
+  margin: 18px 0;
+
+  padding: 0 11px;
+
+  border: 1px solid #2b2f35;
+
+  border-radius: 7px;
+
+  background: #191c21;
+
+  color: white;
+
+  outline: none;
+}
+
+.search-box:focus {
+  border-color: #555b63;
+}
+
+.search-box::placeholder {
+  color: #686d76;
+}
+
+
+/* =========================================================
+   CATEGORY
+========================================================= */
+
+.category-title {
+  margin: 18px 0 10px;
+
+  color: #666c75;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+
+/* =========================================================
+   FURNITURE GRID
+========================================================= */
+
+.furniture-grid {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap: 7px;
+}
+
+.furniture-card {
+  height: 78px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  border: 1px solid #292d33;
+
+  border-radius: 8px;
+
+  background: #171a1f;
+
+  color: #aeb3bc;
+
+  transition: 0.15s;
+}
+
+.furniture-card:hover {
+  border-color: #e6ff4f;
+
+  color: #e6ff4f;
+
+  transform: translateY(-1px);
+}
+
+.furniture-card span {
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   AI TOOLS
+========================================================= */
+
+.ai-tool {
+  width: 100%;
+  height: 38px;
+
+  margin-bottom: 7px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 0 11px;
+
+  border: 1px solid #292d33;
+
+  border-radius: 7px;
+
+  background: #171a1f;
+
+  color: #b5bac3;
+}
+
+.ai-tool:hover {
+  border-color: #e6ff4f;
+
+  color: #e6ff4f;
+}
+
+
+/* =========================================================
+   3D VIEWPORT
+========================================================= */
+
+.viewport {
+  position: relative;
+
+  min-width: 0;
+
+  background: #15171b;
+}
+
+.viewport canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+
+/* =========================================================
+   VIEWPORT LABEL
+========================================================= */
+
+.viewport-label {
+  position: absolute;
+
+  z-index: 5;
+
+  top: 17px;
+  left: 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 7px 10px;
+
+  border-radius: 6px;
+
+  background: rgba(12, 14, 17, 0.85);
+
+  border: 1px solid #2b2f35;
+
+  font-size: 9px;
+
+  letter-spacing: 1px;
+
+  color: #b8bdc5;
+}
+
+.live-dot,
+.status-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background: #e6ff4f;
+}
+
+
+/* =========================================================
+   VIEWPORT CONTROLS
+========================================================= */
+
+.viewport-controls {
+  position: absolute;
+
+  z-index: 5;
+
+  bottom: 18px;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  display: flex;
+
+  padding: 4px;
+
+  background: rgba(15, 17, 20, 0.92);
+
+  border: 1px solid #2c3036;
+
+  border-radius: 8px;
+}
+
+.viewport-controls button {
+  padding: 8px 13px;
+
+  border: none;
+
+  border-radius: 5px;
+
+  background: transparent;
+
+  color: #8f959e;
+
+  font-size: 10px;
+}
+
+.viewport-controls button:hover {
+  color: white;
+}
+
+.viewport-controls button.active {
+  background: #292d33;
+
+  color: #fff;
+}
+
+
+/* =========================================================
+   RIGHT PANEL
+========================================================= */
+
+.properties-header {
+  margin-bottom: 20px;
+}
+
+.delete-icon {
+  color: #737983;
+
+  cursor: pointer;
+}
+
+.delete-icon:hover {
+  color: #ff6464;
+}
+
+
+/* =========================================================
+   SELECTED OBJECT
+========================================================= */
+
+.selected-object {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 11px;
+
+  border: 1px solid #2b2f35;
+
+  border-radius: 8px;
+
+  background: #171a1f;
+}
+
+.object-icon {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 7px;
+
+  background: #25292f;
+
+  color: #e6ff4f;
+}
+
+.selected-object strong {
+  display: block;
+
+  font-size: 11px;
+}
+
+.selected-object span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #6f757e;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   PROPERTY SECTIONS
+========================================================= */
+
+.property-section {
+  margin-top: 20px;
+}
+
+.property-section h3 {
+  margin: 0 0 9px;
+
+  font-size: 10px;
+
+  color: #8c929b;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   TRANSFORM BUTTONS
+========================================================= */
+
+.transform-buttons {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 5px;
+}
+
+.transform {
+  height: 32px;
+
+  border: 1px solid #2a2e34;
+
+  border-radius: 6px;
+
+  background: #181b20;
+
+  color: #858b94;
+
+  font-size: 9px;
+
+  transition: 0.15s;
+}
+
+.transform:hover {
+  border-color: #e6ff4f;
+
+  color: #e6ff4f;
+}
+
+.transform.active {
+  background: #e6ff4f;
+
+  border-color: #e6ff4f;
+
+  color: #111;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.input-row {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 6px;
+}
+
+.input-row label {
+  color: #656b74;
+
+  font-size: 8px;
+}
+
+.input-row input {
+  width: 100%;
+  height: 29px;
+
+  margin-top: 4px;
+
+  padding: 0 6px;
+
+  border: 1px solid #2a2e34;
+
+  border-radius: 5px;
+
+  background: #181b20;
+
+  color: #bfc4cc;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   MATERIAL
+========================================================= */
+
+.material-options {
+  display: flex;
+
+  gap: 5px;
+}
+
+.material {
+  flex: 1;
+
+  height: 30px;
+
+  border: 1px solid #2a2e34;
+
+  border-radius: 5px;
+
+  background: #181b20;
+
+  color: #7f858e;
+
+  font-size: 8px;
+}
+
+.material:hover {
+  border-color: #555b63;
+}
+
+.material.active {
+  border-color: #e6ff4f;
+
+  color: #e6ff4f;
+}
+
+
+/* =========================================================
+   COLORS
+========================================================= */
+
+.color-options {
+  display: flex;
+
+  gap: 8px;
+}
+
+.color {
+  width: 25px;
+  height: 25px;
+
+  border-radius: 50%;
+
+  border: 2px solid #383c42;
+}
+
+.color:hover {
+  border-color: #e6ff4f;
+}
+
+.color.beige {
+  background: #cdbda5;
+}
+
+.color.brown {
+  background: #6d4c36;
+}
+
+.color.grey {
+  background: #777b80;
+}
+
+.color.white {
+  background: #eeeeea;
+}
+
+.color.black {
+  background: #181818;
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+.resize-button {
+  width: 100%;
+  height: 36px;
+
+  margin-top: 22px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 1px solid #30343a;
+
+  border-radius: 7px;
+
+  background: #191c21;
+
+  color: #aeb3bc;
+}
+
+.resize-button:hover {
+  border-color: #e6ff4f;
+
+  color: #e6ff4f;
+}
+
+
+/* =========================================================
+   EMPTY PROPERTIES
+========================================================= */
+
+.empty-properties {
+  margin-top: 30px;
+
+  color: #737983;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   BOTTOM BAR
+========================================================= */
+
+.bottom-bar {
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding: 0 18px;
+
+  border-top: 1px solid #25282d;
+
+  background: #111317;
+
+  color: #707680;
+
+  font-size: 9px;
+}
+
+.bottom-bar > div:first-child {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+}
+
+.bottom-actions {
+  display: flex;
+
+  gap: 15px;
+}
+
+.bottom-actions button {
+  border: none;
+
+  background: none;
+
+  color: #777d86;
+
+  font-size: 9px;
+}
+
+.bottom-actions button:hover {
+  color: white;
+}
