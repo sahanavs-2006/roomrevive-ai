@@ -1,10 +1,13 @@
-import { useRef, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import {
   Grid,
   OrbitControls,
   TransformControls,
+  useGLTF,
 } from "@react-three/drei";
+
+import * as THREE from "three";
 
 import {
   Upload,
@@ -28,367 +31,214 @@ import "./App.css";
    FURNITURE MODEL
 ========================================================= */
 
+const MODEL_PATHS = {
+  sofa: "/models/sofa.glb",
+  chair: "/models/chair.glb",
+  bed: "/models/bed.glb",
+  table: "/models/table.glb",
+};
+
+/*
+  Target maximum dimensions for the imported GLB models.
+  Bed, chair and table are intentionally larger than before.
+*/
+const MODEL_TARGET_MAX_SIZE = {
+  sofa: 3.4,
+  chair: 2.5,
+  bed: 4.4,
+  table: 1.6,
+};
+
+const MODEL_ROTATION = {
+  sofa: [0, Math.PI, 0],
+  chair: [0, 0, 0],
+  bed: [0, 0, 0],
+  table: [0, 0, 0],
+};
+
+function GLBModel({ type }) {
+  const { scene } = useGLTF(MODEL_PATHS[type]);
+  const model = useMemo(() => scene.clone(true), [scene]);
+  const modelRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const root = modelRef.current;
+    if (!root) return;
+
+    root.scale.set(1, 1, 1);
+    root.position.set(0, 0, 0);
+    root.rotation.set(...(MODEL_ROTATION[type] || [0, 0, 0]));
+    root.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(root);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+
+    const largestDimension = Math.max(
+      size.x,
+      size.y,
+      size.z
+    );
+
+    const target = MODEL_TARGET_MAX_SIZE[type] || 2;
+
+    if (largestDimension > 0) {
+      const scale = target / largestDimension;
+      root.scale.setScalar(scale);
+    }
+
+    root.updateMatrixWorld(true);
+
+    const finalBox = new THREE.Box3().setFromObject(root);
+    const center = new THREE.Vector3();
+    finalBox.getCenter(center);
+
+    /* Center the furniture on X/Z and put its feet on Y=0. */
+    root.position.x -= center.x;
+    root.position.z -= center.z;
+    root.position.y -= finalBox.min.y;
+
+    root.updateMatrixWorld(true);
+  }, [model, type]);
+
+  return (
+    <group ref={modelRef}>
+      <primitive object={model} />
+    </group>
+  );
+}
+
+function ProceduralPlant() {
+  return (
+    <>
+      <mesh position={[0, 0.35, 0]} castShadow>
+        <cylinderGeometry args={[0.45, 0.6, 0.7, 32]} />
+        <meshStandardMaterial color="#704f35" />
+      </mesh>
+
+      <mesh position={[0, 1.15, 0]} castShadow>
+        <sphereGeometry args={[0.9, 24, 24]} />
+        <meshStandardMaterial color="#47724c" />
+      </mesh>
+    </>
+  );
+}
+
+function ProceduralLamp() {
+  return (
+    <>
+      <mesh position={[0, 0.8, 0]} castShadow>
+        <cylinderGeometry args={[0.06, 0.06, 1.6, 16]} />
+        <meshStandardMaterial color="#444" />
+      </mesh>
+
+      <mesh position={[0, 1.7, 0]} castShadow>
+        <coneGeometry args={[0.45, 0.6, 32]} />
+        <meshStandardMaterial color="#ddd0ad" />
+      </mesh>
+    </>
+  );
+}
+
+function FurnitureGeometry({ object }) {
+  if (MODEL_PATHS[object.type]) {
+    return <GLBModel type={object.type} />;
+  }
+
+  if (object.type === "plant") {
+    return <ProceduralPlant />;
+  }
+
+  if (object.type === "lamp") {
+    return <ProceduralLamp />;
+  }
+
+  return null;
+}
+
 function FurnitureObject({
   object,
   selected,
   mode,
   onSelect,
   onChange,
-  setTransforming,
+  orbitControlsRef,
 }) {
-  const groupRef = useRef(null);
+  const [target, setTarget] = useState(null);
 
   const handleObjectChange = () => {
-    if (!groupRef.current) return;
+    if (!target) return;
 
     onChange(object.id, {
       position: [
-        groupRef.current.position.x,
-        groupRef.current.position.y,
-        groupRef.current.position.z,
+        target.position.x,
+        target.position.y,
+        target.position.z,
       ],
-
       rotation: [
-        groupRef.current.rotation.x,
-        groupRef.current.rotation.y,
-        groupRef.current.rotation.z,
+        target.rotation.x,
+        target.rotation.y,
+        target.rotation.z,
       ],
-
       scale: [
-        groupRef.current.scale.x,
-        groupRef.current.scale.y,
-        groupRef.current.scale.z,
+        target.scale.x,
+        target.scale.y,
+        target.scale.z,
       ],
     });
   };
 
+  const furnitureGroup = (
+    <group
+      ref={setTarget}
+      position={object.position}
+      rotation={object.rotation}
+      scale={object.scale}
+      onClick={(event) => {
+        event.stopPropagation();
+        onSelect(object.id);
+      }}
+    >
+      <Suspense fallback={null}>
+        <FurnitureGeometry object={object} />
+      </Suspense>
 
-  let geometry = null;
-
-
-  /* =======================================================
-     SOFA
-  ======================================================= */
-
-  if (object.type === "sofa") {
-    geometry = (
-      <>
-        <mesh castShadow>
-          <boxGeometry args={[3, 0.7, 1]} />
-          <meshStandardMaterial color={object.color} />
-        </mesh>
-
-        <mesh
-          position={[0, 0.7, -0.35]}
-          castShadow
-        >
-          <boxGeometry args={[3, 1, 0.3]} />
-          <meshStandardMaterial color={object.color} />
-        </mesh>
-
-        <mesh
-          position={[-1.35, 0.35, 0]}
-          castShadow
-        >
-          <boxGeometry args={[0.3, 0.7, 1]} />
-          <meshStandardMaterial color={object.color} />
-        </mesh>
-
-        <mesh
-          position={[1.35, 0.35, 0]}
-          castShadow
-        >
-          <boxGeometry args={[0.3, 0.7, 1]} />
-          <meshStandardMaterial color={object.color} />
-        </mesh>
-      </>
-    );
-  }
-
-
-  /* =======================================================
-     TABLE
-  ======================================================= */
-
-  else if (object.type === "table") {
-    geometry = (
-      <>
-        <mesh castShadow>
-          <boxGeometry args={[2, 0.25, 1]} />
-          <meshStandardMaterial color={object.color} />
-        </mesh>
-
-        {[
-          [-0.8, -0.7, -0.35],
-          [0.8, -0.7, -0.35],
-          [-0.8, -0.7, 0.35],
-          [0.8, -0.7, 0.35],
-        ].map((position, index) => (
-          <mesh
-            key={index}
-            position={position}
-            castShadow
-          >
-            <boxGeometry args={[0.15, 1.4, 0.15]} />
-            <meshStandardMaterial color={object.color} />
-          </mesh>
-        ))}
-      </>
-    );
-  }
-
-
-  /* =======================================================
-     PLANT
-  ======================================================= */
-
-  else if (object.type === "plant") {
-    geometry = (
-      <>
-        <mesh
-          position={[0, -0.6, 0]}
-          castShadow
-        >
-          <cylinderGeometry
-            args={[0.45, 0.6, 0.7, 32]}
-          />
-
-          <meshStandardMaterial
-            color="#704f35"
+      {selected && (
+        <mesh raycast={() => null}>
+          <boxGeometry args={[3.6, 2.8, 4.6]} />
+          <meshBasicMaterial
+            color="#e6ff4f"
+            wireframe
+            transparent
+            opacity={0.22}
+            depthTest={false}
           />
         </mesh>
-
-        <mesh
-          position={[0, 0.3, 0]}
-          castShadow
-        >
-          <sphereGeometry
-            args={[0.9, 24, 24]}
-          />
-
-          <meshStandardMaterial
-            color="#47724c"
-          />
-        </mesh>
-      </>
-    );
-  }
-
-
-  /* =======================================================
-     BED
-  ======================================================= */
-
-  else if (object.type === "bed") {
-    geometry = (
-      <>
-        <mesh
-          position={[0, 0.35, 0]}
-          castShadow
-        >
-          <boxGeometry
-            args={[3, 0.4, 4]}
-          />
-
-          <meshStandardMaterial
-            color={object.color}
-          />
-        </mesh>
-
-        <mesh
-          position={[0, 0.9, -1.75]}
-          castShadow
-        >
-          <boxGeometry
-            args={[3, 1.2, 0.25]}
-          />
-
-          <meshStandardMaterial
-            color={object.color}
-          />
-        </mesh>
-
-        <mesh
-          position={[0, 0.62, 1]}
-          castShadow
-        >
-          <boxGeometry
-            args={[2.7, 0.25, 1]}
-          />
-
-          <meshStandardMaterial
-            color="#eee8dc"
-          />
-        </mesh>
-      </>
-    );
-  }
-
-
-  /* =======================================================
-     CHAIR
-  ======================================================= */
-
-  else if (object.type === "chair") {
-    geometry = (
-      <>
-        <mesh
-          position={[0, 0.5, 0]}
-          castShadow
-        >
-          <boxGeometry
-            args={[1.2, 0.25, 1.2]}
-          />
-
-          <meshStandardMaterial
-            color={object.color}
-          />
-        </mesh>
-
-        <mesh
-          position={[0, 1.1, -0.45]}
-          castShadow
-        >
-          <boxGeometry
-            args={[1.2, 1.2, 0.2]}
-          />
-
-          <meshStandardMaterial
-            color={object.color}
-          />
-        </mesh>
-
-        {[
-          [-0.45, 0, -0.45],
-          [0.45, 0, -0.45],
-          [-0.45, 0, 0.45],
-          [0.45, 0, 0.45],
-        ].map((position, index) => (
-          <mesh
-            key={index}
-            position={position}
-            castShadow
-          >
-            <boxGeometry
-              args={[0.1, 1, 0.1]}
-            />
-
-            <meshStandardMaterial
-              color={object.color}
-            />
-          </mesh>
-        ))}
-      </>
-    );
-  }
-
-
-  /* =======================================================
-     LAMP
-  ======================================================= */
-
-  else if (object.type === "lamp") {
-    geometry = (
-      <>
-        <mesh
-          position={[0, 0.8, 0]}
-          castShadow
-        >
-          <cylinderGeometry
-            args={[0.06, 0.06, 1.6, 16]}
-          />
-
-          <meshStandardMaterial
-            color="#444"
-          />
-        </mesh>
-
-        <mesh
-          position={[0, 1.7, 0]}
-          castShadow
-        >
-          <coneGeometry
-            args={[0.45, 0.6, 32]}
-          />
-
-          <meshStandardMaterial
-            color="#ddd0ad"
-          />
-        </mesh>
-      </>
-    );
-  }
-
+      )}
+    </group>
+  );
 
   return (
-    <group>
-
-      {/* Actual furniture object */}
-
-      <group
-        ref={groupRef}
-
-        position={object.position}
-
-        rotation={object.rotation}
-
-        scale={object.scale}
-
-        onClick={(event) => {
-          event.stopPropagation();
-          onSelect(object.id);
-        }}
-      >
-
-        {geometry}
-
-        {selected && (
-          <mesh>
-
-            <boxGeometry
-              args={[3.5, 2.5, 4.5]}
-            />
-
-            <meshBasicMaterial
-              color="#e6ff4f"
-              wireframe
-              transparent
-              opacity={0.25}
-            />
-
-          </mesh>
-        )}
-
-      </group>
-
-
-      {/* Transform controller */}
-
-      {selected && groupRef.current && (
-
+    <>
+      {selected && target && (
         <TransformControls
-          object={groupRef.current}
-
           mode={mode}
-
-          onMouseDown={() =>
-            setTransforming(true)
-          }
-
-          onMouseUp={() =>
-            setTransforming(false)
-          }
-
-          onObjectChange={
-            handleObjectChange
-          }
-
           size={0.9}
+          space={mode === "scale" ? "local" : "world"}
+          object={target}
+          onDraggingChanged={(event) => {
+            if (orbitControlsRef.current) {
+              orbitControlsRef.current.enabled = !event.value;
+            }
+
+            if (!event.value) {
+              handleObjectChange();
+            }
+          }}
         />
-
       )}
-
-    </group>
+      {furnitureGroup}
+    </>
   );
 }
 
@@ -403,7 +253,7 @@ function Room({
   setSelectedId,
   updateFurniture,
   transformMode,
-  setTransforming,
+  orbitControlsRef,
 }) {
   return (
     <group>
@@ -566,8 +416,8 @@ function Room({
             updateFurniture
           }
 
-          setTransforming={
-            setTransforming
+          orbitControlsRef={
+            orbitControlsRef
           }
         />
 
@@ -584,6 +434,8 @@ function Room({
 
 function App() {
 
+  const orbitControlsRef = useRef(null);
+
   const [
     selectedId,
     setSelectedId,
@@ -594,12 +446,6 @@ function App() {
     transformMode,
     setTransformMode,
   ] = useState("translate");
-
-
-  const [
-    transforming,
-    setTransforming,
-  ] = useState(false);
 
 
   const [
@@ -616,7 +462,7 @@ function App() {
 
       position: [
         0,
-        1,
+        0,
         -2.5,
       ],
 
@@ -647,7 +493,7 @@ function App() {
 
       position: [
         0,
-        0.9,
+        0,
         0,
       ],
 
@@ -678,7 +524,7 @@ function App() {
 
       position: [
         3.5,
-        1,
+        0,
         -2,
       ],
 
@@ -771,7 +617,7 @@ function App() {
         names[type],
 
       position:
-        [0, 1, 0],
+        [0, 0, 0],
 
       rotation:
         [0, 0, 0],
@@ -1187,8 +1033,8 @@ function App() {
                 transformMode
               }
 
-              setTransforming={
-                setTransforming
+              orbitControlsRef={
+                orbitControlsRef
               }
             />
 
@@ -1220,25 +1066,20 @@ function App() {
 
 
             <OrbitControls
+              ref={orbitControlsRef}
               makeDefault
-
-              enabled={
-                !transforming
-              }
-
               enableDamping
-
               dampingFactor={0.08}
-
               minDistance={5}
-
               maxDistance={18}
-
               target={[
                 0,
                 1.5,
                 0,
               ]}
+              enableRotate
+              enableZoom
+              enablePan
             />
 
           </Canvas>
