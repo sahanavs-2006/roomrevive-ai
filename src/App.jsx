@@ -22,6 +22,8 @@ import {
   Trash2,
   Rotate3D,
   Maximize2,
+  Image as ImageIcon,
+  X as XIcon,
 } from "lucide-react";
 
 import "./App.css";
@@ -435,6 +437,35 @@ function Room({
 function App() {
 
   const orbitControlsRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const [roomImage, setRoomImage] = useState(null);
+  const [showImageOverlay, setShowImageOverlay] = useState(true);
+
+  const handleUploadClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+      if (!allowedTypes.includes(file.type)) {
+        alert("Please select a valid image file (JPG, PNG, or WebP).");
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      setRoomImage({
+        url,
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+      });
+      setShowImageOverlay(true);
+    }
+    e.target.value = "";
+  };
 
   const [
     selectedId,
@@ -718,12 +749,21 @@ function App() {
 
         <div className="top-actions">
 
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/jpeg,image/png,image/webp,image/jpg"
+            style={{ display: "none" }}
+          />
+
           <button
             className="secondary-button"
+            onClick={handleUploadClick}
           >
             <Upload size={17} />
 
-            Upload Room
+            {roomImage ? "Change Room" : "Upload Room"}
           </button>
 
 
@@ -955,6 +995,45 @@ function App() {
             3D EDITOR
 
           </div>
+
+          {roomImage && (
+            <div className="uploaded-room-preview">
+              <div className="preview-header">
+                <div className="preview-title">
+                  <ImageIcon size={14} />
+                  <span>Room Reference</span>
+                </div>
+                <div className="preview-actions">
+                  <button
+                    className="preview-toggle-btn"
+                    title={showImageOverlay ? "Minimize Preview" : "Expand Preview"}
+                    onClick={() => setShowImageOverlay(!showImageOverlay)}
+                  >
+                    <Maximize2 size={13} />
+                  </button>
+                  <button
+                    className="preview-close-btn"
+                    title="Remove Image"
+                    onClick={() => {
+                      if (roomImage.url) URL.revokeObjectURL(roomImage.url);
+                      setRoomImage(null);
+                    }}
+                  >
+                    <XIcon size={13} />
+                  </button>
+                </div>
+              </div>
+              {showImageOverlay && (
+                <div className="preview-body">
+                  <img src={roomImage.url} alt="Uploaded Room View" />
+                  <div className="preview-info">
+                    <span className="file-name" title={roomImage.name}>{roomImage.name}</span>
+                    <span className="file-size">{roomImage.size}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
 
           <Canvas
