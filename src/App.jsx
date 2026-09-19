@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import "./App.css";
+import { uploadRoomImageToS3 } from "./api/roomUpload";
 
 
 /* =========================================================
@@ -441,6 +442,8 @@ function App() {
 
   const [roomImage, setRoomImage] = useState(null);
   const [showImageOverlay, setShowImageOverlay] = useState(true);
+  const [uploadStatus, setUploadStatus] = useState("idle");
+  const [uploadError, setUploadError] = useState("");
 
   const handleUploadClick = () => {
     if (fileInputRef.current) {
@@ -448,22 +451,59 @@ function App() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-      if (!allowedTypes.includes(file.type)) {
-        alert("Please select a valid image file (JPG, PNG, or WebP).");
-        return;
-      }
-      const url = URL.createObjectURL(file);
-      setRoomImage({
-        url,
-        name: file.name,
-        size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
-      });
-      setShowImageOverlay(true);
+
+    if (!file) return;
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/jpg",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please select a valid image file (JPG, PNG, or WebP).");
+      e.target.value = "";
+      return;
     }
+
+    // Show the image immediately in the existing Room Reference panel
+    const url = URL.createObjectURL(file);
+
+    setRoomImage({
+      url,
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+      s3Key: null,
+    });
+
+    setShowImageOverlay(true);
+    setUploadStatus("uploading");
+    setUploadError("");
+
+    try {
+      // Upload the same image to Amazon S3
+      const result = await uploadRoomImageToS3(file);
+
+      setRoomImage((previous) => ({
+        ...previous,
+        s3Key: result.key,
+      }));
+
+      setUploadStatus("uploaded");
+
+      console.log("Room image uploaded to S3:", result.key);
+    } catch (error) {
+      console.error("Room image upload failed:", error);
+
+      setUploadStatus("error");
+      setUploadError(error.message);
+
+      alert(`Room image upload failed: ${error.message}`);
+    }
+
     e.target.value = "";
   };
 
@@ -1029,6 +1069,21 @@ function App() {
                   <div className="preview-info">
                     <span className="file-name" title={roomImage.name}>{roomImage.name}</span>
                     <span className="file-size">{roomImage.size}</span>
+                    {uploadStatus === "uploading" && (
+                      <span className="file-size">
+                        Uploading to AWS...
+                      </span>
+                    )}
+                    {uploadStatus === "uploaded" && (
+                      <span className="file-size">
+                        ✓ Synced to AWS
+                      </span>
+                    )}
+                    {uploadStatus === "error" && (
+                      <span className="file-size">
+                        Upload failed
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
